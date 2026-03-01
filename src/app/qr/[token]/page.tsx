@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { decodeBase64UrlToken, verifyHMACToken } from '@/lib/hmac';
 import { generateQRCodeSVG } from '@/lib/qrcode';
@@ -31,12 +32,13 @@ export default async function QRCodePage({ params }: PageProps) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
       <div className="w-full max-w-sm">
-        <img
+        <Image
           src={svgDataUrl}
           alt="QR Code"
           width={256}
           height={256}
           className="mx-auto"
+          unoptimized
         />
         <p className="mt-6 text-center text-gray-600 text-sm">
           このQRコードを会場で提示してください

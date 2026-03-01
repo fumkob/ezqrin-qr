@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import { verifyHMACToken, decodeBase64UrlToken } from '../hmac';
 
@@ -6,7 +7,6 @@ const TEST_SECRET = 'test-secret-key-that-is-at-least-32-characters-long';
 // Helper: generate a valid signed token for testing
 // Matches Go format: {raw_token}.{base64url_hmac_sha256}
 function makeSignedToken(secret: string, rawToken: string): string {
-  const { createHmac } = require('crypto');
   const mac = createHmac('sha256', secret);
   mac.update(rawToken);
   const sig = mac.digest('base64url');
