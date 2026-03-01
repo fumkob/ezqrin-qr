@@ -1,8 +1,11 @@
 import Image from 'next/image';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { decodeBase64UrlToken, verifyHMACToken } from '@/lib/hmac';
 import { generateQRCodeSVG } from '@/lib/qrcode';
 import { getQRHMACSecret, getEventInfo } from '@/lib/env';
+import { getMessages } from '@/lib/messages';
+import type { Lang } from '@/lib/lang';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,13 +29,24 @@ export default async function QRCodePage({ params }: PageProps) {
     notFound();
   }
 
-  // 3. Generate QR code SVG and embed as base64 data URL (no dangerouslySetInnerHTML needed)
+  // 3. Load messages from lang set by proxy
+  const headersList = await headers();
+  const lang = (headersList.get('x-lang') ?? 'en') as Lang;
+  const msg = getMessages(lang);
+
+  // 4. Generate QR code SVG as base64 data URL
   const svgString = await generateQRCodeSVG(qrToken);
   const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
 
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <>
+      <style>{`
+        @media print {
+          @page { size: A4 portrait; margin: 1.5cm; }
+        }
+      `}</style>
+    <main className="min-h-screen bg-slate-100 sm:flex sm:items-center sm:justify-center sm:p-4 print:min-h-0 print:bg-white print:block print:p-0">
+      <div className="w-full sm:max-w-sm bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden print:shadow-none flex flex-col h-dvh sm:h-auto print:h-auto overflow-y-auto sm:overflow-y-visible">
 
         {/* (A) 上部アクセントバー */}
         <div className="bg-gradient-to-r from-indigo-600 to-violet-600 h-2" />
@@ -70,12 +84,12 @@ export default async function QRCodePage({ params }: PageProps) {
         {/* (D) ミシン目セパレーター */}
         <div className="relative mx-0">
           <div className="border-t-2 border-dashed border-slate-200" />
-          <div className="w-5 h-5 rounded-full bg-slate-100 absolute -left-2.5 -top-2.5" />
-          <div className="w-5 h-5 rounded-full bg-slate-100 absolute -right-2.5 -top-2.5" />
+          <div className="w-5 h-5 rounded-full bg-slate-100 absolute -left-2.5 -top-2.5 print:bg-white" />
+          <div className="w-5 h-5 rounded-full bg-slate-100 absolute -right-2.5 -top-2.5 print:bg-white" />
         </div>
 
         {/* (E) QR コードブロック */}
-        <div className="px-6 py-6 flex flex-col items-center">
+        <div className="px-6 py-6 flex-1 flex flex-col items-center justify-center">
           <Image
             src={svgDataUrl}
             alt="QR Code"
@@ -84,18 +98,19 @@ export default async function QRCodePage({ params }: PageProps) {
             unoptimized
           />
           <p className="text-xs text-slate-400 mt-3 text-center">
-            このQRコードを会場入口でご提示ください
+            {msg.qr_instruction}
           </p>
         </div>
 
         {/* (F) フッターバー */}
         <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3">
           <p className="text-white text-xs tracking-widest text-center uppercase">
-            Admit One · 入場券
+            {msg.admit_one}
           </p>
         </div>
 
       </div>
     </main>
+    </>
   );
 }
