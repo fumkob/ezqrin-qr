@@ -2,15 +2,9 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { decodeBase64UrlToken, verifyHMACToken } from '@/lib/hmac';
 import { generateQRCodeSVG } from '@/lib/qrcode';
-import { getQRHMACSecret } from '@/lib/env';
+import { getQRHMACSecret, getEventInfo } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
-
-const EVENT_NAME = "Festa Tokyo 2026";
-const EVENT_VENUE = "東京ドーム 第1ホール";
-const EVENT_DATE = "2026.03.01";
-const EVENT_ADDRESS = "東京都文京区後楽1丁目3−61";
-const EVENT_MAPS_URL = "https://maps.google.com/?q=東京ドーム";
 
 interface PageProps {
   params: Promise<{ token: string }>;
@@ -27,6 +21,7 @@ export default async function QRCodePage({ params }: PageProps) {
 
   // 2. Verify HMAC signature
   const secret = getQRHMACSecret();
+  const event = getEventInfo();
   if (!verifyHMACToken(secret, qrToken)) {
     notFound();
   }
@@ -51,23 +46,23 @@ export default async function QRCodePage({ params }: PageProps) {
         {/* (C) イベント情報ブロック */}
         <div className="px-6 pb-5">
           <p className="text-[10px] tracking-widest text-slate-400 uppercase">Event</p>
-          <p className="text-2xl font-bold text-slate-800">{EVENT_NAME}</p>
+          <p className="text-2xl font-bold text-slate-800">{event.name}</p>
           <div className="flex flex-col gap-3 mt-4">
             <div>
               <p className="text-[10px] tracking-widest text-slate-400 uppercase">Venue</p>
-              <p className="text-sm font-semibold text-slate-700">{EVENT_VENUE}</p>
+              <p className="text-sm font-semibold text-slate-700">{event.venue}</p>
               <a
-                href={EVENT_MAPS_URL}
+                href={event.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-indigo-500 underline"
               >
-                {EVENT_ADDRESS}
+                {event.address}
               </a>
             </div>
             <div>
               <p className="text-[10px] tracking-widest text-slate-400 uppercase">Date</p>
-              <p className="text-sm font-semibold text-slate-700">{EVENT_DATE}</p>
+              <p className="text-sm font-semibold text-slate-700">{event.date}</p>
             </div>
           </div>
         </div>
